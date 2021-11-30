@@ -60,8 +60,11 @@ namespace Proyecto
 
         private void lbxDatabases_SelectedIndexChanged(object sender, EventArgs e)
         {
-            dbmanager.Seleccion = lbxDatabases.Items[lbxDatabases.SelectedIndex].ToString();
-            tbxConsole.AppendText("La base de datos actual es: " + dbmanager.Seleccion + "\r\n");
+            if (lbxDatabases.SelectedIndex != -1)
+            {
+                dbmanager.Seleccion = lbxDatabases.Items[lbxDatabases.SelectedIndex].ToString();
+                tbxConsole.AppendText("La base de datos actual es: " + dbmanager.Seleccion + "\r\n");
+            }
         }
 
         private void nuevaBaseDeDatosToolStripMenuItem_Click(object sender, EventArgs e)
