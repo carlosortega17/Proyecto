@@ -48,12 +48,14 @@ namespace Proyecto
             if(e.KeyCode == Keys.Enter)
             {
                 if (tbxCommand.Text.Length > 0) ExecuteCommand(tbxCommand.Text);
+                tbxCommand.Clear();
             }
         }
 
         private void btnCommand_Click(object sender, EventArgs e)
         {
             if(tbxCommand.Text.Length > 0) ExecuteCommand(tbxCommand.Text);
+            tbxCommand.Clear();
         }
 
         private void lbxDatabases_SelectedIndexChanged(object sender, EventArgs e)
