@@ -33,16 +33,13 @@ namespace Proyecto
             this.mnsMenu = new System.Windows.Forms.MenuStrip();
             this.archivoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.nuevaBaseDeDatosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.abrirBaseDeDatosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.editarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.verToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ayudaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.tbxConsole = new System.Windows.Forms.TextBox();
+            this.btnCommand = new System.Windows.Forms.Button();
+            this.tbxCommand = new System.Windows.Forms.TextBox();
             this.pnlLeft = new System.Windows.Forms.Panel();
             this.lbxDatabases = new System.Windows.Forms.ListBox();
-            this.tbxCommand = new System.Windows.Forms.TextBox();
-            this.btnCommand = new System.Windows.Forms.Button();
-            this.tbxConsole = new System.Windows.Forms.TextBox();
             this.mnsMenu.SuspendLayout();
             this.panel1.SuspendLayout();
             this.pnlLeft.SuspendLayout();
@@ -52,8 +49,6 @@ namespace Proyecto
             // 
             this.mnsMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.archivoToolStripMenuItem,
-            this.editarToolStripMenuItem,
-            this.verToolStripMenuItem,
             this.ayudaToolStripMenuItem});
             this.mnsMenu.Location = new System.Drawing.Point(0, 0);
             this.mnsMenu.Name = "mnsMenu";
@@ -64,41 +59,24 @@ namespace Proyecto
             // archivoToolStripMenuItem
             // 
             this.archivoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.nuevaBaseDeDatosToolStripMenuItem,
-            this.abrirBaseDeDatosToolStripMenuItem});
+            this.nuevaBaseDeDatosToolStripMenuItem});
             this.archivoToolStripMenuItem.Name = "archivoToolStripMenuItem";
-            this.archivoToolStripMenuItem.Size = new System.Drawing.Size(60, 20);
-            this.archivoToolStripMenuItem.Text = "Archivo";
+            this.archivoToolStripMenuItem.Size = new System.Drawing.Size(69, 20);
+            this.archivoToolStripMenuItem.Text = "Opciones";
             // 
             // nuevaBaseDeDatosToolStripMenuItem
             // 
             this.nuevaBaseDeDatosToolStripMenuItem.Name = "nuevaBaseDeDatosToolStripMenuItem";
             this.nuevaBaseDeDatosToolStripMenuItem.Size = new System.Drawing.Size(183, 22);
             this.nuevaBaseDeDatosToolStripMenuItem.Text = "Nueva base de datos";
-            // 
-            // abrirBaseDeDatosToolStripMenuItem
-            // 
-            this.abrirBaseDeDatosToolStripMenuItem.Name = "abrirBaseDeDatosToolStripMenuItem";
-            this.abrirBaseDeDatosToolStripMenuItem.Size = new System.Drawing.Size(183, 22);
-            this.abrirBaseDeDatosToolStripMenuItem.Text = "Abrir base de datos";
-            // 
-            // editarToolStripMenuItem
-            // 
-            this.editarToolStripMenuItem.Name = "editarToolStripMenuItem";
-            this.editarToolStripMenuItem.Size = new System.Drawing.Size(49, 20);
-            this.editarToolStripMenuItem.Text = "Editar";
-            // 
-            // verToolStripMenuItem
-            // 
-            this.verToolStripMenuItem.Name = "verToolStripMenuItem";
-            this.verToolStripMenuItem.Size = new System.Drawing.Size(35, 20);
-            this.verToolStripMenuItem.Text = "Ver";
+            this.nuevaBaseDeDatosToolStripMenuItem.Click += new System.EventHandler(this.nuevaBaseDeDatosToolStripMenuItem_Click);
             // 
             // ayudaToolStripMenuItem
             // 
             this.ayudaToolStripMenuItem.Name = "ayudaToolStripMenuItem";
             this.ayudaToolStripMenuItem.Size = new System.Drawing.Size(53, 20);
             this.ayudaToolStripMenuItem.Text = "Ayuda";
+            this.ayudaToolStripMenuItem.Click += new System.EventHandler(this.ayudaToolStripMenuItem_Click);
             // 
             // panel1
             // 
@@ -112,6 +90,38 @@ namespace Proyecto
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(784, 537);
             this.panel1.TabIndex = 1;
+            // 
+            // tbxConsole
+            // 
+            this.tbxConsole.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tbxConsole.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.tbxConsole.ForeColor = System.Drawing.Color.Lime;
+            this.tbxConsole.Location = new System.Drawing.Point(206, 30);
+            this.tbxConsole.Multiline = true;
+            this.tbxConsole.Name = "tbxConsole";
+            this.tbxConsole.ReadOnly = true;
+            this.tbxConsole.Size = new System.Drawing.Size(566, 495);
+            this.tbxConsole.TabIndex = 3;
+            // 
+            // btnCommand
+            // 
+            this.btnCommand.Location = new System.Drawing.Point(697, 3);
+            this.btnCommand.Name = "btnCommand";
+            this.btnCommand.Size = new System.Drawing.Size(75, 23);
+            this.btnCommand.TabIndex = 2;
+            this.btnCommand.Text = "Executar";
+            this.btnCommand.UseVisualStyleBackColor = true;
+            this.btnCommand.Click += new System.EventHandler(this.btnCommand_Click);
+            // 
+            // tbxCommand
+            // 
+            this.tbxCommand.Location = new System.Drawing.Point(206, 3);
+            this.tbxCommand.Name = "tbxCommand";
+            this.tbxCommand.Size = new System.Drawing.Size(485, 21);
+            this.tbxCommand.TabIndex = 1;
+            this.tbxCommand.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tbxCommand_KeyDown);
             // 
             // pnlLeft
             // 
@@ -132,38 +142,6 @@ namespace Proyecto
             this.lbxDatabases.Size = new System.Drawing.Size(200, 537);
             this.lbxDatabases.TabIndex = 0;
             this.lbxDatabases.SelectedIndexChanged += new System.EventHandler(this.lbxDatabases_SelectedIndexChanged);
-            // 
-            // tbxCommand
-            // 
-            this.tbxCommand.Location = new System.Drawing.Point(206, 3);
-            this.tbxCommand.Name = "tbxCommand";
-            this.tbxCommand.Size = new System.Drawing.Size(485, 21);
-            this.tbxCommand.TabIndex = 1;
-            this.tbxCommand.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tbxCommand_KeyDown);
-            // 
-            // btnCommand
-            // 
-            this.btnCommand.Location = new System.Drawing.Point(697, 3);
-            this.btnCommand.Name = "btnCommand";
-            this.btnCommand.Size = new System.Drawing.Size(75, 23);
-            this.btnCommand.TabIndex = 2;
-            this.btnCommand.Text = "Executar";
-            this.btnCommand.UseVisualStyleBackColor = true;
-            this.btnCommand.Click += new System.EventHandler(this.btnCommand_Click);
-            // 
-            // tbxConsole
-            // 
-            this.tbxConsole.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.tbxConsole.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.tbxConsole.ForeColor = System.Drawing.Color.Lime;
-            this.tbxConsole.Location = new System.Drawing.Point(206, 30);
-            this.tbxConsole.Multiline = true;
-            this.tbxConsole.Name = "tbxConsole";
-            this.tbxConsole.ReadOnly = true;
-            this.tbxConsole.Size = new System.Drawing.Size(566, 495);
-            this.tbxConsole.TabIndex = 3;
             // 
             // FrmMain
             // 
@@ -192,12 +170,9 @@ namespace Proyecto
 
         private System.Windows.Forms.MenuStrip mnsMenu;
         private System.Windows.Forms.ToolStripMenuItem archivoToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem editarToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem verToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ayudaToolStripMenuItem;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.ToolStripMenuItem nuevaBaseDeDatosToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem abrirBaseDeDatosToolStripMenuItem;
         private System.Windows.Forms.Panel pnlLeft;
         private System.Windows.Forms.ListBox lbxDatabases;
         private System.Windows.Forms.Button btnCommand;

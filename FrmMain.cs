@@ -6,11 +6,13 @@ namespace Proyecto
 {
     public partial class FrmMain : Form
     {
+        FrmCrearDB crearDB;
         DatabaseManager dbmanager;
         public FrmMain()
         {
             InitializeComponent();
             dbmanager = new DatabaseManager();
+            crearDB = new FrmCrearDB();
             LoadDatabasesList();
         }
 
@@ -57,7 +59,21 @@ namespace Proyecto
         private void lbxDatabases_SelectedIndexChanged(object sender, EventArgs e)
         {
             dbmanager.Seleccion = lbxDatabases.Items[lbxDatabases.SelectedIndex].ToString();
-            MessageBox.Show("La base de datos actual es "+dbmanager.Seleccion, "Base de datos en uso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            tbxConsole.AppendText("La base de datos actual es: " + dbmanager.Seleccion + "\r\n");
+        }
+
+        private void nuevaBaseDeDatosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if(crearDB.ShowDialog() == DialogResult.OK)
+            {
+                dbmanager.createDatabase(crearDB.tbxNombre.Text);
+                LoadDatabasesList();
+            }
+        }
+
+        private void ayudaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            new FrmAyuda().ShowDialog(this);
         }
     }
 }
