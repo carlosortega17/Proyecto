@@ -45,10 +45,12 @@ namespace Proyecto
 
         private void tbxCommand_KeyDown(object sender, KeyEventArgs e)
         {
+            
             if(e.KeyCode == Keys.Enter)
             {
                 if (tbxCommand.Text.Length > 0) ExecuteCommand(tbxCommand.Text);
                 tbxCommand.Clear();
+                e.SuppressKeyPress = true;
             }
         }
 
