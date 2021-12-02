@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
@@ -54,10 +55,11 @@ namespace Proyecto.Controllers
             try
             {
                 string path = DATABASES_PATH + Seleccion + "\\" + tbname+".struct";
-                Console.WriteLine(path);
-                if(File.Exists(path))
+                string table = DATABASES_PATH + Seleccion + "\\" + tbname + ".table";
+                if (File.Exists(path))
                 {
                     File.Delete(path);
+                    if(File.Exists(table)) File.Delete(table); // Se usa de esta forma ya que no se genera el archivo .table hasta que se agreguen datos
                 }
             }
             catch(IOException ex)
@@ -130,6 +132,110 @@ namespace Proyecto.Controllers
                         {
                             throw new Exception(string.Format("La tabla {0} ya existe", command[2]));
                         }
+                    }
+                }
+            }
+            catch(IOException ex)
+            {
+                Console.WriteLine("\n\nError: " + ex.Message + "\n\nStackTrace: " + ex.StackTrace);
+            }
+        }
+
+        public void deleteColumn(string tbname, string col)
+        {
+            try
+            {
+                if (Seleccion != null)
+                {
+                    string path = DATABASES_PATH + Seleccion + "\\" + tbname + ".struct";
+                    FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+                    BinaryReader reader = new BinaryReader(fs);
+                    // TABLE
+                    string name = reader.ReadString();
+                    Int32 columns = reader.ReadInt32();
+                    int pointer = -1, counter = 0;
+                    ArrayList columns_ = new ArrayList();
+                    while (counter < columns)
+                    {
+                        columns_.Add(reader.ReadString());
+                        if (columns_[counter].ToString().Split(' ')[0].Equals(col)) pointer = counter;
+                        counter += 1;
+                    }
+                    reader.Close();
+                    fs.Close();
+                    // Removemos la columna
+                    columns_.RemoveAt(pointer);
+                    fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+                    BinaryWriter binaryWriter = new BinaryWriter(fs);
+                    binaryWriter.Write(name);
+                    binaryWriter.Write(columns - 1);
+                    foreach (string col_ in columns_)
+                    {
+                        binaryWriter.Write(col_);
+                    }
+                    binaryWriter.Flush();
+                    binaryWriter.Close();
+                    fs.Close();
+                }
+            }
+            catch(IOException ex)
+            {
+                Console.WriteLine("\n\nError: " + ex.Message + "\n\nStackTrace: " + ex.StackTrace);
+            }
+        }
+
+        public void addColumn(string struct_)
+        {
+            try
+            {
+                if (Seleccion != null)
+                {
+                    if (struct_.Contains("(") && struct_.Contains(")"))
+                    {
+                        string[] table = struct_.Split(new char[2] { '(', ')' });
+                        string[] command = table[0].Split(' ');
+                        string[] columns__ = table[1].Split(new string[1] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+                        string path = DATABASES_PATH + Seleccion + "\\" + command[2] + ".struct";
+                        FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+                        BinaryReader reader = new BinaryReader(fs);
+                        // TABLE
+                        string name = reader.ReadString();
+                        Int32 columns = reader.ReadInt32();
+                        int counter = 0, rep = 0;
+                        ArrayList columns_ = new ArrayList();
+                        while (counter < columns)
+                        {
+                            columns_.Add(reader.ReadString());
+                            counter += 1;
+                        }
+                        reader.Close();
+                        fs.Close();
+                        if (rep != 0) throw new Exception("Error, la columna ya existe");
+                        // Agregamos las columnas
+                        foreach(string col_ in columns__)
+                        {
+                            columns_.Add(col_);
+                        }
+                        // verificamos que no existan columnas repetidas
+                        string[] temp = new string[columns_.Count];
+                        for(int i=0;i<columns_.Count;i++)
+                        {
+                            temp[i] = columns_[i].ToString();
+                        }
+
+                        tableStruct(temp);
+
+                        fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+                        BinaryWriter binaryWriter = new BinaryWriter(fs);
+                        binaryWriter.Write(name);
+                        binaryWriter.Write(columns + 1);
+                        foreach (string col_ in columns_)
+                        {
+                            binaryWriter.Write(col_);
+                        }
+                        binaryWriter.Flush();
+                        binaryWriter.Close();
+                        fs.Close();
                     }
                 }
             }
@@ -296,6 +402,10 @@ namespace Proyecto.Controllers
                             console.AppendText("No se selecciono ninguna base de datos\r\n");
                         }
                     }
+                    else if(commands[1].Equals("campo") && commands.Length > 2)
+                    {
+                        addColumn(cmd);
+                    }
                 }
                 else if(commands[0].Equals("borra"))
                 {
@@ -315,6 +425,10 @@ namespace Proyecto.Controllers
                         {
                             console.AppendText(string.Format("{0}\r\n", ex.Message));
                         }
+                    }
+                    else if (commands[1].Equals("campo") && commands.Length == 4)
+                    {
+                        deleteColumn(commands[2], commands[3]);
                     }
                 }
                 else if(commands[0].Equals("muestra"))
@@ -344,7 +458,7 @@ namespace Proyecto.Controllers
                     if(commands[1].Equals("base") && commands.Length == 3)
                     {
                         Seleccion = commands[2];
-                        console.AppendText(string.Format("Se selecciono la base de datos {0}\r\n", commands[2]));
+                        console.AppendText(string.Format("Se selecciono la base de datos {0}\r\n", Seleccion));
                     }
                 }
                 else if(commands[0].Equals("describir"))
