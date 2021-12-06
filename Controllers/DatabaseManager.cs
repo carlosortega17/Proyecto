@@ -315,14 +315,14 @@ namespace Proyecto.Controllers
                 if (type == types[3])
                 {
                     int size = 8;
-                    Console.WriteLine("Name: {0}\nType: {1}\nSize: {2}", name, type, size);
+                    //Console.WriteLine("Name: {0}\nType: {1}\nSize: {2}", name, type, size);
                 }
                 else
                 {
                     int size = int.Parse(col[2]);
                     int point = 0;
                     if (type == types[2]) point = int.Parse(col[3]);
-                    Console.WriteLine("Name: {0}\nType: {1}\nSize: {2}\nPoint: {3}", name, type, size, point);
+                    //Console.WriteLine("Name: {0}\nType: {1}\nSize: {2}\nPoint: {3}", name, type, size, point);
                 }
             }
         }
@@ -372,117 +372,588 @@ namespace Proyecto.Controllers
             }
         }
 
-        public void execute(string cmd, TextBox console)
+        private void addRowTable(string tbname, string struct_)
         {
-            string[] commands = cmd.Split(' ');
-            if(commands.Length > 0)
+            FileStream fs = null;
+            string path = DATABASES_PATH + Seleccion + "\\" + tbname + ".table";
+            if (!File.Exists(path)) fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+            else fs = new FileStream(path, FileMode.Append, FileAccess.Write);
+            BinaryWriter binaryWriter = new BinaryWriter(fs);
+            string[] cols = readTableStruct(tbname);
+            // Deconstruccion de la estructur a de la fila
+            string[] body = struct_.Split(new char[2] { '(', ')' });
+            string[] command = body[0].Split(' ');
+            string[] data = body[1].Split(new string[1] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+            int c = 0;
+            foreach (string col in cols)
             {
-                if(commands[0].Equals("crea")) // Comandos que inician con crea
+                string[] str = col.Split(' ');
+                if (str.Length == 4)
                 {
-                    if(commands[1].Equals("base") && commands.Length == 3) // Para crear base de datos
+                    if (str[1].Equals("decimal"))
                     {
-                        createDatabase(commands[2]);
-                        console.AppendText(string.Format("Se creo la base de datos {0}\r\n", commands[2]));
+                        if (data[c].Length <= int.Parse(str[2])) binaryWriter.Write(double.Parse(data[c]));
                     }
-                    else if(commands[1].Equals("tabla") && commands.Length > 2) // Para crear tablas
+                }
+                else
+                {
+                    if (str[1].Equals("entero"))
                     {
-                        if(Seleccion!=null)
+                        if (data[c].Length <= int.Parse(str[2])) binaryWriter.Write(Int32.Parse(data[c]));
+                    }
+                    else if (str[1].Equals("caracter"))
+                    {
+                        if (data[c].Length <= int.Parse(str[2])) binaryWriter.Write(data[c]);
+                    }
+                    else if (str[1].Equals("fecha"))
+                    {
+                        DateTime dt;
+                        if (DateTime.TryParse(data[c], out dt))
                         {
-                            try
+                            if (data[c].Length <= int.Parse(str[2])) binaryWriter.Write(data[c]);
+                        }
+                    }
+                }
+                c += 1;
+            }
+            fs.Close();
+        }
+
+        private void viewAllData(string tbname, TextBox console)
+        {
+            FileStream fs = null;
+            string path = DATABASES_PATH + Seleccion + "\\" + tbname + ".table";
+            if (File.Exists(path))
+            {
+                fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+                BinaryReader binaryReader = new BinaryReader(fs);
+                string[] cols = readTableStruct(tbname);
+                while (fs.Position != fs.Length)
+                {
+                    int c = 0;
+                    foreach (string col in cols)
+                    {
+                        string[] str = col.Split(' ');
+                        if (str.Length == 4)
+                        {
+                            if (str[1].Equals("decimal"))
                             {
-                                createTable(cmd);
-                                console.AppendText(string.Format("Se creo la tabla {0}\r\n", commands[2]));
-                            }catch(Exception ex)
-                            {
-                                console.AppendText(string.Format("{0}\r\n", ex.Message));
+                                string zero = "";
+                                for(int t=0;t<int.Parse(str[3]); t++) zero += "0";
+                                console.AppendText(string.Format("{0} = {1:"+zero+"}\t", str[0], binaryReader.ReadDouble()));
                             }
                         }
                         else
                         {
-                            console.AppendText("No se selecciono ninguna base de datos\r\n");
+                            if (str[1].Equals("entero"))
+                            {
+                                console.AppendText(string.Format("{0} = {1}\t", str[0], binaryReader.ReadInt32()));
+                            }
+                            else if (str[1].Equals("caracter"))
+                            {
+                                console.AppendText(string.Format("{0} = {1}\t", str[0], binaryReader.ReadString()));
+                            }
+                            else if (str[1].Equals("fecha"))
+                            {
+                                console.AppendText(string.Format("{0} = {1}\t", str[0], binaryReader.ReadString()));
+                            }
+                        }
+                        c += 1;
+                    }
+                    console.AppendText("\r\n");
+                }
+                fs.Close();
+            }
+        }
+
+        private ArrayList readAllDataTable(string tbname)
+        {
+            ArrayList tempData = new ArrayList();
+            string path = DATABASES_PATH + Seleccion + "\\" + tbname + ".table";
+            FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+            BinaryReader binaryReader = new BinaryReader(fs);
+            string[] cols = readTableStruct(tbname);
+            while (fs.Position != fs.Length)
+            {
+                int c = 0;
+                ArrayList temp = new ArrayList();
+                foreach (string col in cols)
+                {
+                    string[] str = col.Split(' ');
+                    ArrayList data_ = new ArrayList();
+                    data_.Add(str[0]);
+                    if (str.Length == 4)
+                    {
+                        if (str[1].Equals("decimal"))
+                        {
+                            double value_ = binaryReader.ReadDouble();
+                            data_.Add(value_);
                         }
                     }
-                    else if(commands[1].Equals("campo") && commands.Length > 2)
+                    else
                     {
-                        addColumn(cmd);
+                        if (str[1].Equals("entero"))
+                        {
+                            Int32 value_ = binaryReader.ReadInt32();
+                            data_.Add(value_);
+                        }
+                        else if (str[1].Equals("caracter"))
+                        {
+                            string value_ = binaryReader.ReadString();
+                            data_.Add(value_);
+                        }
+                        else if (str[1].Equals("fecha"))
+                        {
+                            string value_ = binaryReader.ReadString();
+                            data_.Add(value_);
+                        }
+                    }
+                    temp.Add(data_);
+                    c += 1;
+                }
+                tempData.Add(temp);
+            }
+            binaryReader.Close();
+            fs.Close();
+            return tempData;
+        }
+
+        private void deleteRecord(string tbname, string struct_)
+        {
+            string path = DATABASES_PATH + Seleccion + "\\" + tbname + ".table";
+            FileStream fs = null;
+            if (File.Exists(path))
+            {
+                ArrayList tempData = readAllDataTable(tbname);
+                int index = -1;
+                int rep = 0;
+                string[] cmd = struct_.Split('=');
+                string value = cmd[1];
+                string column = cmd[0].Split(' ')[2];
+                do
+                {
+                    index = -1;
+                    for (int i = 0; i < tempData.Count; i++)
+                    {
+                        var tmp = (ArrayList)tempData[i];
+                        for (int j = 0; j < tmp.Count; j++)
+                        {
+                            var col_ = (ArrayList)tmp[j];
+                            Console.WriteLine(col_[1].GetType().Name);
+                            if (col_[1].GetType().Name == "String")
+                            {
+                                
+                                if (col_[0].ToString().Equals(column) && col_[1].ToString().Equals(value))
+                                {
+                                    index = i;
+                                }
+                            }
+                            else if (col_[1].GetType().Name == "Int32")
+                            {
+
+                                if (col_[0].ToString().Equals(column) && Int32.Parse(col_[1].ToString()) == Int32.Parse(value))
+                                {
+                                    index = i;
+                                }
+                            }
+                            else if (col_[1].GetType().Name == "Double")
+                            {
+
+                                if (col_[0].ToString().Equals(column) && Double.Parse(col_[1].ToString()) == Double.Parse(value))
+                                {
+                                    index = i;
+                                }
+                            }
+                        }
+                    }
+                    if (index != -1) { tempData.RemoveAt(index); rep += 1; }
+                } while (index != -1);
+                fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+                BinaryWriter binaryWriter = new BinaryWriter(fs);
+                for (int i = 0; i < tempData.Count; i++)
+                {
+                    var tmp = (ArrayList)tempData[i];
+                    for (int j = 0; j < tmp.Count; j++)
+                    {
+                        var col_ = (ArrayList)tmp[j];
+
+                        if (col_[1].GetType().Name == "String") binaryWriter.Write(col_[1].ToString());
+                        else if (col_[1].GetType().Name == "Int32") binaryWriter.Write(Int32.Parse(col_[1].ToString()));
+                        else if (col_[1].GetType().Name == "Double") binaryWriter.Write(Double.Parse(col_[1].ToString()));
                     }
                 }
-                else if(commands[0].Equals("borra"))
+                binaryWriter.Close();
+                fs.Close();
+            }
+        }
+
+        private void modifyRecord(string tbname, string struct_)
+        {
+            string path = DATABASES_PATH + Seleccion + "\\" + tbname + ".table";
+            string[] table = struct_.Split(new char[2] { '(', ')' });
+            string[] command = table[0].Split(' ');
+            string[] columns = table[1].Split(new string[1] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+            string[] condition = table[2].Split('=');
+            string target = condition[0].Split(' ')[2];
+            string value = condition[1];
+            ArrayList tempData = readAllDataTable(tbname);
+
+            FileStream fs = null;
+            int index = -1;
+            int rp = 0;
+            do
+            {
+                for (int i = 0; i < tempData.Count; i++)
                 {
-                    if (commands[1].Equals("base") && commands.Length == 3)
+                    var tmp = (ArrayList)tempData[i];
+                    for (int j = 0; j < tmp.Count; j++)
                     {
-                        deleteDatabase(commands[2]);
-                        console.AppendText(string.Format("Se elimino la base de datos {0}\r\n", commands[2]));
+                        var col_ = (ArrayList)tmp[j];
+                        if (col_[1].GetType().Name == "String")
+                        {
+                            if (col_[0].ToString().Equals(target) && col_[1].ToString().Equals(value))
+                            {
+                                index = i;
+                            }
+                        }
+                        else if (col_[1].GetType().Name == "Int32")
+                        {
+                            if (col_[0].ToString().Equals(target) && Int32.Parse(col_[1].ToString()) == Int32.Parse(value))
+                            {
+                                index = i;
+                            }
+                        }
+                        else if (col_[1].GetType().Name == "Double")
+                        {
+                            if (col_[0].ToString().Equals(target) && Double.Parse(col_[1].ToString()) == Double.Parse(value))
+                            {
+                                index = i;
+                            }
+                        }
                     }
-                    else if (commands[1].Equals("tabla") && commands.Length == 3)
+                }
+                if (index != -1)
+                {
+                    var temp = (ArrayList)tempData[index];
+                    for (int i = 0; i < temp.Count; i++)
+                    {
+                        foreach (string column in columns)
+                        {
+                            var col_ = (ArrayList)temp[i];
+                            Console.WriteLine("{0} : {1}", col_[0], col_[1]);
+                            string[] cmd = column.Split('=');
+                            string col = cmd[0];
+                            string val = cmd[1];
+                            if (col_[0].ToString() == col)
+                            {
+                                col_[1] = val;
+                            }
+                        }
+                    }
+                }
+                rp += 1;
+            } while (rp < tempData.Count);
+            fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+            BinaryWriter binaryWriter = new BinaryWriter(fs);
+            for (int i = 0; i < tempData.Count; i++)
+            {
+                var tmp = (ArrayList)tempData[i];
+                for (int j = 0; j < tmp.Count; j++)
+                {
+                    var col_ = (ArrayList)tmp[j];
+                    if (col_[1].GetType().Name == "String") binaryWriter.Write(col_[1].ToString());
+                    else if (col_[1].GetType().Name == "Int32") binaryWriter.Write(Int32.Parse(col_[1].ToString()));
+                    else if (col_[1].GetType().Name == "Double") binaryWriter.Write(Double.Parse(col_[1].ToString()));
+                }
+            }
+            binaryWriter.Close();
+            fs.Close();
+        }
+
+        private void viewAllDataPerColumns(string tbname, string struct_, TextBox console)
+        {
+            string path = DATABASES_PATH + Seleccion + "\\" + tbname + ".table";
+            if (File.Exists(path))
+            {
+                string[] table = struct_.Split(new char[2] { '(', ')' });
+                string[] command = table[0].Split(' ');
+                string[] columns = table[1].Split(new string[1] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+                ArrayList tempData = readAllDataTable(tbname);
+                foreach (ArrayList row in tempData)
+                {
+                    for (int i = 0; i < row.Count; i++)
+                    {
+                        ArrayList colInfo = (ArrayList)row[i];
+                        for (int t = 0; t < columns.Length; t++)
+                        {
+                            if (colInfo[0].ToString() == columns[t])
+                            {
+                                console.AppendText(string.Format("{0} = {1}\t", colInfo[0], colInfo[1]));
+                            }
+                        }
+                    }
+                    console.AppendText("\r\n");
+                }
+            }
+        }
+
+        private void viewAllDataPerValue(string tbname, string struct_, TextBox console)
+        {
+            string path = DATABASES_PATH + Seleccion + "\\" + tbname + ".table";
+            if (File.Exists(path))
+            {
+                string[] table = struct_.Split(new char[2] { '(', ')' });
+                string[] command = table[0].Split(' ');
+                string[] columns = table[1].Split(new string[1] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+                ArrayList tempData = readAllDataTable(tbname);
+                foreach (ArrayList row in tempData)
+                {
+                    bool coincide = false;
+                    for (int i = 0; i < row.Count; i++)
+                    {
+                        
+                        ArrayList colInfo = (ArrayList)row[i];
+                        for (int t = 0; t < columns.Length; t++)
+                        {
+                            if (colInfo[1].ToString() == columns[t].Split('=')[1])
+                            {
+                                coincide = true;
+                            }
+                        }
+                        
+                    }
+                    for (int i = 0; i < row.Count; i++)
+                    {
+                        ArrayList colInfo = (ArrayList)row[i];
+                        if (coincide)
+                        {
+                            console.AppendText(string.Format("{0} = {1}\t", colInfo[0], colInfo[1]));
+                        }
+                    }
+                    if(coincide) console.AppendText("\r\n");
+                }
+            }
+        }
+
+        private void viewPerColAndValue(string tbname, string struct_, TextBox console)
+        {
+            string path = DATABASES_PATH + Seleccion + "\\" + tbname + ".table";
+            if (File.Exists(path))
+            {
+                string[] table = struct_.Split(new char[2] { '(', ')' });
+                string[] columns = table[1].Split(new string[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+                string[] target = table[3].Split('=');
+                string column_ = target[0];
+                string value = target[1];
+                ArrayList tempData = readAllDataTable(tbname);
+                foreach (ArrayList row in tempData)
+                {
+                    bool coincide = false;
+                    for (int i = 0; i < row.Count; i++)
+                    {
+                        ArrayList colInfo = (ArrayList)row[i];
+                        for (int t = 0; t < columns.Length; t++)
+                        {
+                            if (colInfo[1].ToString() == value)
+                            {
+                                coincide = true;
+                            }
+                        }
+                    }
+                    for (int i = 0; i < row.Count; i++)
+                    {
+                        ArrayList colInfo = (ArrayList)row[i];
+                        if (coincide)
+                        {
+                            for (int t = 0; t < columns.Length; t++)
+                            {
+                                if (colInfo[0].ToString() == columns[t])
+                                {
+                                    console.AppendText(string.Format("{0} = {1}\t", colInfo[0], colInfo[1]));
+                                }
+                            }
+                        }
+                    }
+                    if (coincide) console.AppendText("\r\n");
+                }
+            }
+        }
+
+        public void execute(string cmd, TextBox console)
+        {
+            string[] commands = cmd.Split(' ');
+            try
+            {
+
+                if (commands.Length > 0)
+                {
+                    if (commands[0].Equals("crea")) // Comandos que inician con crea
+                    {
+                        if (commands[1].Equals("base") && commands.Length == 3) // Para crear base de datos
+                        {
+                            createDatabase(commands[2]);
+                            console.AppendText(string.Format("Se creo la base de datos {0}\r\n", commands[2]));
+                        }
+                        else if (commands[1].Equals("tabla") && commands.Length > 2) // Para crear tablas
+                        {
+                            if (Seleccion != null)
+                            {
+                                try
+                                {
+                                    createTable(cmd);
+                                    console.AppendText(string.Format("Se creo la tabla {0}\r\n", commands[2]));
+                                }
+                                catch (Exception ex)
+                                {
+                                    console.AppendText(string.Format("{0}\r\n", ex.Message));
+                                }
+                            }
+                            else
+                            {
+                                console.AppendText("No se selecciono ninguna base de datos\r\n");
+                            }
+                        }
+                        else if (commands[1].Equals("campo") && commands.Length > 2)
+                        {
+                            addColumn(cmd);
+                            console.AppendText(string.Format("Se creo la columna \r\n"));
+                        }
+                    }
+                    else if (commands[0].Equals("borra"))
+                    {
+                        if (commands[1].Equals("base") && commands.Length == 3)
+                        {
+                            deleteDatabase(commands[2]);
+                            console.AppendText(string.Format("Se elimino la base de datos {0}\r\n", commands[2]));
+                        }
+                        else if (commands[1].Equals("tabla") && commands.Length == 3)
+                        {
+                            try
+                            {
+                                deleteTable(commands[2]);
+                                console.AppendText(string.Format("Se elimino la tabla {0}\r\n", commands[2]));
+                            }
+                            catch (Exception ex)
+                            {
+                                console.AppendText(string.Format("{0}\r\n", ex.Message));
+                            }
+                        }
+                        else if (commands[1].Equals("campo") && commands.Length == 4)
+                        {
+                            deleteColumn(commands[2], commands[3]);
+                            console.AppendText("Se elimino la columna "+commands[3]+" de la tabla "+commands[2]+"\r\n");
+                        }
+                    }
+                    else if (commands[0].Equals("muestra"))
+                    {
+                        if (commands[1].Equals("bases") && commands.Length == 2)
+                        {
+                            console.AppendText("Bases de datos\r\n");
+                            foreach (var dir in listDatabase())
+                            {
+                                console.AppendText("\t- " + dir.Name + "\r\n");
+                            }
+                        }
+                        else if (commands[1].Equals("tablas") && commands.Length == 2)
+                        {
+                            try
+                            {
+                                showTables(console);
+                            }
+                            catch (Exception ex)
+                            {
+                                console.AppendText(string.Format("{0}\r\n", ex.Message));
+                            }
+                        }
+                    }
+                    else if (commands[0].Equals("lista"))
+                    {
+                        Console.WriteLine(commands[1]);
+                        if (commands[1].Equals("*"))
+                        {
+                            if (commands.Length == 3) viewAllData(commands[2], console);
+                            else viewAllDataPerValue(commands[2], cmd, console);
+                        }
+                        else if (commands[1].Contains("("))
+                        {
+                            string[] params_ = cmd.Split(new char[] { '(', ')' });
+                            string table_name = params_[2].Split(' ')[1];
+                            viewPerColAndValue(table_name, cmd, console);
+                        }
+                        else viewAllDataPerColumns(commands[1], cmd, console);
+                    }
+                    else if (commands[0].Equals("elimina"))
                     {
                         try
                         {
-                            deleteTable(commands[2]);
-                            console.AppendText(string.Format("Se elimino la tabla {0}\r\n", commands[2]));
+                            deleteRecord(commands[1], cmd);
+                            console.AppendText("Se elimino correctamente la fila en " + commands[1] + "\r\n");
                         }
                         catch (Exception ex)
                         {
-                            console.AppendText(string.Format("{0}\r\n", ex.Message));
+
                         }
                     }
-                    else if (commands[1].Equals("campo") && commands.Length == 4)
-                    {
-                        deleteColumn(commands[2], commands[3]);
-                    }
-                }
-                else if(commands[0].Equals("muestra"))
-                {
-                    if (commands[1].Equals("bases") && commands.Length == 2)
-                    {
-                        console.AppendText("Bases de datos\r\n");
-                        foreach (var dir in listDatabase())
-                        {
-                            console.AppendText("\t- "+dir.Name + "\r\n");
-                        }
-                    }
-                    else if(commands[1].Equals("tablas") && commands.Length == 2)
+                    else if (commands[0].Equals("inserta"))
                     {
                         try
                         {
-                            showTables(console);
+                            addRowTable(commands[1], cmd);
+                            console.AppendText("Se inserto correctamente una fila en " + commands[1] + "\r\n");
                         }
                         catch (Exception ex)
                         {
-                            console.AppendText(string.Format("{0}\r\n", ex.Message));
+
                         }
                     }
-                }
-                else if(commands[0].Equals("usa"))
-                {
-                    if(commands[1].Equals("base") && commands.Length == 3)
+                    else if (commands[0].Equals("modifica"))
                     {
-                        Seleccion = commands[2];
-                        console.AppendText(string.Format("Se selecciono la base de datos {0}\r\n", Seleccion));
+                        try
+                        {
+                            modifyRecord(commands[1], cmd);
+                            console.AppendText("Se modifico correctamente la tabla " + commands[1] + "\r\n");
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
                     }
+                    else if (commands[0].Equals("usa"))
+                    {
+                        if (commands[1].Equals("base") && commands.Length == 3)
+                        {
+                            Seleccion = commands[2];
+                            console.AppendText(string.Format("Se selecciono la base de datos {0}\r\n", Seleccion));
+                        }
+                    }
+                    else if (commands[0].Equals("describir"))
+                    {
+                        readTableStruct(commands[1]);
+                    }
+                    // Comandos para controlar la "Consola"
+                    else if (commands[0].StartsWith("salir"))
+                    {
+                        Application.Exit(); // Cerrar el programa
+                    }
+                    else if (commands[0].StartsWith("ayuda"))
+                    {
+                        console.AppendText("\r\n"); // Agragamos un salto de linea
+                        console.AppendText(ayuda + "\r\n"); // Mostramos el texto de ayuda
+                    }
+                    else if (commands[0].StartsWith("limpia"))
+                    {
+                        console.Clear(); // Limpiamos la "consola"
+                    }
+                    else
+                    {
+                        console.AppendText("Comando no encontrado, pruebe con: ayuda\r\n");
+                    }
+
                 }
-                else if(commands[0].Equals("describir"))
-                {
-                    readTableStruct("ejemplo");
-                }
-                // Comandos para controlar la "Consola"
-                else if (commands[0].StartsWith("salir"))
-                {
-                    Application.Exit(); // Cerrar el programa
-                }
-                else if(commands[0].StartsWith("ayuda"))
-                {
-                    console.AppendText("\r\n"); // Agragamos un salto de linea
-                    console.AppendText(ayuda+"\r\n"); // Mostramos el texto de ayuda
-                }
-                else if (commands[0].StartsWith("limpia"))
-                {
-                    console.Clear(); // Limpiamos la "consola"
-                }
-                else
-                {
-                    console.AppendText("Comando no encontrado, pruebe con: ayuda\r\n");
-                }
+            }
+            catch(Exception ex)
+            {
+
             }
         }
     }
